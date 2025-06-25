@@ -2,7 +2,7 @@ msg_str = to_string(.message) ?? ""
 
 parsed = parse_regex!(
   msg_str,
-  r'type=(?P<type>\S+) msg=audit\((?P<epoch>\d+\.\d+):(?P<event_id>\d+)\): pid=(?P<pid>\d+) uid=(?P<uid>\d+) auid=(?P<auid>\d+) ses=(?P<ses>\d+) subj=(?P<subj>\S+) msg=\'(?P<msg>.*?)\'\x1dUID="(?P<UID>[^"]+)" AUID="(?P<AUID>[^"]+)"'
+  r'type=(?P<type>\S+) msg=audit\((?P<epoch>\d+\.\d+):(?P<event_id>\d+)\): pid=(?P<pid>\d+) uid=(?P<uid>\d+) auid=(?P<auid>\d+) ses=(?P<ses>\d+) subj=(?P<subj>\S+) msg=\'unit=(?P<msg_unit>\S+) comm=(?P<msg_comm>\S+) exe=(?P<msg_exe>\S+) hostname=(?P<msg_hostname>\S+) addr=(?P<msg_addr>\S+) terminal=(?P<msg_terminal>\S+) res=(?P<msg_res>\w+)'
 )
 
 if parsed != null {
@@ -16,29 +16,14 @@ if parsed != null {
   .selinux_subj = parsed.subj
   .UID = parsed.UID
   .AUID = parsed.AUID
-  .audit_msg_raw = parsed.msg
-
-  kv_map = {}
-  kv_items = split(parsed.msg, " ")
-
-  for_each(kv_items) -> |_, pair| {
-    if contains(pair, "=") {
-      parts = split(pair, "=")
-      if length(parts) == 2 {
-        key = replace!(parts[0], "\"", "")
-        value = replace!(parts[1], "\"", "")
-        kv_map, _ = set(kv_map, array!(key), value)
-      }
-    }
-  }
-
-  .unit, _ = get(kv_map, array!("unit"))
-  .comm, _ = get(kv_map, array!("comm"))
-  .exe, _ = get(kv_map, array!("exe"))
-  .hostname_nested, _ = get(kv_map, array!("hostname"))
-  .addr, _ = get(kv_map, array!("addr"))
-  .terminal, _ = get(kv_map, array!("terminal"))
-  .res, _ = get(kv_map, array!("res"))
+  .msg_unit = parsed.msg_unit
+  .msg_comm = parsed.msg_comm
+  .msg_exe = parsed.msg_exe
+  .msg_hostname = parsed.msg_hostname
+  .msg_addr = parsed.msg_addr
+  .msg_terminal = parsed.msg_terminal
+  .msg_res = parsed.msg_res
+  
 }
 
 .vendor = "RedHat"
@@ -102,3 +87,5 @@ Type
 mcp_redhat_rhel_tst_CL
 _ResourceId
 /subscriptions/94c8616e-9a3e-480d-b7d1-3222a1669ccf/resourcegroups/pocastwu2rgacs/providers/microsoft.operationalinsights/workspaces/siempocm
+
+type=(?P<type>\S+) msg=audit\((?P<epoch>\d+\.\d+):(?P<event_id>\d+)\): pid=(?P<pid>\d+) uid=(?P<uid>\d+) auid=(?P<auid>\d+) ses=(?P<ses>\d+) subj=(?P<subj>\S+) msg=\'unit=(?P<msg_unit>\S+) comm=(?P<msg_comm>\S+) exe=(?P<msg_exe>\S+) hostname=(?P<msg_hostname>\S+) addr=(?P<msg_addr>\S+) terminal=(?P<msg_terminal>\S+) res=(?P<msg_res>\w+)
